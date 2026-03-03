@@ -1,73 +1,196 @@
-# Welcome to your Lovable project
+# AccelBio Gene Annotator
 
-## Project info
+**A browser-based gene annotation and clinical evidence explorer for cancer genomics research.**
 
-**URL**: [https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID](https://accelbio-genes-annotator.lovable.app/)
+> ⚠️ **Disclaimer**: This tool is for **research and educational purposes only**. It is not a diagnostic or clinical decision-making tool. All annotations are derived from curated public databases and sample data.
 
-## How can I edit this code?
+**Live App**: [accelbio-genes-annotator.lovable.app](https://accelbio-genes-annotator.lovable.app/)
 
-There are several ways of editing your application.
+---
 
-**Use Lovable**
+## 🎯 Purpose
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+AccelBio Gene Annotator helps researchers quickly annotate a list of genes with:
 
-Changes made via Lovable will be committed automatically to this repo.
+- **Genomic identifiers** (Ensembl, Entrez)
+- **Functional roles** (Oncogene, Tumor Suppressor, Kinase, DNA Repair, TF, Immune)
+- **Cancer relevance** narratives
+- **Clinical evidence** status (CIViC, DGIdb)
+- **Expression statistics** (mean, median, min, max, outlier %)
 
-**Use your preferred IDE**
+Upload your own gene expression data or explore a built-in demo dataset of 12 well-characterized cancer genes.
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+---
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## ✨ Key Features
 
-Follow these steps:
+| Feature | Description |
+|---|---|
+| **JSON Upload** | Drag-and-drop or browse to load your gene expression data |
+| **Demo Dataset** | One-click load of 12 cancer genes × 8 samples |
+| **Gene Annotation Table** | Sortable, filterable table with role badges and expression stats |
+| **Gene Detail View** | Tabbed layout: Summary, Clinical Evidence, Druggability, Expression Context |
+| **Expression Charts** | Per-gene bar charts with mean reference line (Recharts) |
+| **Report Builder** | Select genes, toggle fields, export as CSV or JSON |
+| **Schema Preview** | Instant preview of uploaded data structure |
+| **External Links** | Direct links to GeneCards, NCBI, OncoKB, CIViC, DGIdb |
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
+---
+
+## 📦 Installation
+
+Requires [Node.js](https://nodejs.org/) (v18+) and npm.
+
+```bash
+# Clone the repository
 git clone <YOUR_GIT_URL>
+cd accelbio-genes-annotator
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+# Install dependencies
+npm install
 
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start development server
 npm run dev
+
+# Build for production
+npm run build
 ```
 
-**Edit a file directly in GitHub**
+---
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## 📂 Expected Input File Format
 
-**Use GitHub Codespaces**
+The app accepts a **JSON file** with two top-level keys:
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### Format A — `values` object (recommended)
 
-## What technologies are used for this project?
+```json
+{
+  "genes": ["TP53", "BRCA1", "EGFR"],
+  "expressions": [
+    { "gene": "TP53",  "values": { "Sample_1": 5.2, "Sample_2": 3.1, "Sample_3": 8.7 } },
+    { "gene": "BRCA1", "values": { "Sample_1": 2.1, "Sample_2": 1.8, "Sample_3": 3.4 } },
+    { "gene": "EGFR",  "values": { "Sample_1": 7.8, "Sample_2": 12.3, "Sample_3": 6.5 } }
+  ]
+}
+```
 
-This project is built with:
+### Format B — `samples` array (also supported)
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+```json
+{
+  "genes": ["TP53", "BRCA1"],
+  "expressions": [
+    {
+      "gene": "TP53",
+      "samples": [
+        { "sampleId": "Sample_1", "value": 5.2 },
+        { "sampleId": "Sample_2", "value": 3.1 }
+      ]
+    }
+  ]
+}
+```
 
-## How can I deploy this project?
+### Field Reference
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+| Field | Type | Description |
+|---|---|---|
+| `genes` | `string[]` | Array of gene symbols (e.g., `"TP53"`, `"EGFR"`) |
+| `expressions` | `object[]` | One entry per gene with expression values per sample |
+| `expressions[].gene` | `string` | Gene symbol (must match an entry in `genes`) |
+| `expressions[].values` | `Record<string, number>` | Sample ID → expression value mapping |
 
-## Can I connect a custom domain to my Lovable project?
+---
 
-Yes, you can!
+## 🧬 Generating Input from R
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+If you have an expression matrix (genes in rows, samples in columns), use this R script to convert it to the expected JSON format:
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+```r
+# install.packages("jsonlite")  # if not already installed
+library(jsonlite)
+
+# --- Option 1: From a file (TSV/CSV with gene symbols in first column) ---
+expr_matrix <- read.delim("expression_matrix.tsv", row.names = 1, check.names = FALSE)
+
+# --- Option 2: From a Bioconductor SummarizedExperiment ---
+# expr_matrix <- as.data.frame(assay(se))
+
+# Build the JSON structure
+genes <- rownames(expr_matrix)
+expressions <- lapply(genes, function(g) {
+  vals <- as.list(expr_matrix[g, ])
+  list(gene = g, values = vals)
+})
+
+output <- list(
+  genes = genes,
+  expressions = expressions
+)
+
+# Write to file
+write_json(output, "gene_data.json", auto_unbox = TRUE, pretty = TRUE)
+
+cat("Wrote", length(genes), "genes ×", ncol(expr_matrix), "samples to gene_data.json\n")
+```
+
+### Example input matrix (`expression_matrix.tsv`)
+
+```
+        Sample_1  Sample_2  Sample_3
+TP53    5.2       3.1       8.7
+BRCA1   2.1       1.8       3.4
+EGFR    7.8       12.3      6.5
+```
+
+---
+
+## 🗂️ Project Structure
+
+```
+├── public/                     # Static assets
+├── src/
+│   ├── components/
+│   │   ├── ui/                 # shadcn/ui primitives (Button, Card, Tabs, etc.)
+│   │   ├── DisclaimerBanner.tsx # Research-use-only banner
+│   │   ├── GeneTable.tsx       # Main gene annotation table
+│   │   ├── NavLink.tsx         # Navigation link component
+│   │   ├── ReportBuilder.tsx   # Export gene reports as CSV/JSON
+│   │   ├── SchemaPreview.tsx   # Uploaded data structure preview
+│   │   └── UploadArea.tsx      # Drag-and-drop JSON upload
+│   ├── contexts/
+│   │   └── GeneDataContext.tsx # Shared state for gene data & annotations
+│   ├── data/
+│   │   └── sampleData.ts      # Gene database, annotation logic, demo data
+│   ├── hooks/                  # Custom React hooks
+│   ├── lib/
+│   │   └── utils.ts           # Utility functions (cn, etc.)
+│   ├── pages/
+│   │   ├── GeneDetail.tsx     # Gene detail view with tabbed layout
+│   │   ├── Index.tsx          # Main dashboard page
+│   │   └── NotFound.tsx       # 404 page
+│   ├── App.tsx                # Router & layout
+│   ├── index.css              # Design tokens & global styles
+│   └── main.tsx               # Entry point
+├── tailwind.config.ts          # Tailwind configuration
+├── vite.config.ts              # Vite build configuration
+└── package.json
+```
+
+---
+
+## 🛠️ Tech Stack
+
+- **React 18** + **TypeScript** — UI framework
+- **Vite** — Build tool with HMR
+- **Tailwind CSS** — Utility-first styling
+- **shadcn/ui** — Accessible component primitives
+- **Recharts** — Expression data visualization
+- **React Router** — Client-side routing
+
+---
+
+## 📄 License
+
+This project is for research and educational use. See repository for license details.
