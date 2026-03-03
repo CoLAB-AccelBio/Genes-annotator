@@ -1,8 +1,9 @@
-import { Dna, FlaskConical } from "lucide-react";
+import { Dna, FlaskConical, FileText } from "lucide-react";
 import DisclaimerBanner from "@/components/DisclaimerBanner";
 import UploadArea from "@/components/UploadArea";
 import SchemaPreview from "@/components/SchemaPreview";
 import GeneTable from "@/components/GeneTable";
+import ReportBuilder from "@/components/ReportBuilder";
 import { SAMPLE_DATA, annotateGenes } from "@/data/sampleData";
 import type { UploadedData } from "@/data/sampleData";
 import { useGeneData } from "@/contexts/GeneDataContext";
@@ -68,6 +69,14 @@ const Index = () => {
                 </button>
               </div>
               <GeneTable genes={annotations} />
+            </div>
+
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <FileText className="h-5 w-5 text-primary" />
+                <h2 className="text-xl font-bold text-foreground">Report Builder</h2>
+              </div>
+              <ReportBuilder />
             </div>
           </div>
         )}
