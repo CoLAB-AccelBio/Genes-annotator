@@ -6,9 +6,9 @@ interface SchemaPreviewProps {
 }
 
 const SchemaPreview = ({ data }: SchemaPreviewProps) => {
-  const sampleCount = data.expressions.length > 0
-    ? Object.keys(data.expressions[0].values).length
-    : 0;
+  const firstExpr = data.expressions?.[0];
+  const sampleKeys = firstExpr?.values ? Object.keys(firstExpr.values) : [];
+  const sampleCount = sampleKeys.length;
 
   return (
     <div className="surface-card p-5 animate-fade-in">
@@ -35,7 +35,7 @@ const SchemaPreview = ({ data }: SchemaPreviewProps) => {
         </div>
       </div>
       <div className="mt-3 text-xs text-muted-foreground">
-        Samples: <span className="font-mono">{data.expressions.length > 0 ? Object.keys(data.expressions[0].values).join(", ") : "—"}</span>
+        Samples: <span className="font-mono">{sampleKeys.length > 0 ? sampleKeys.join(", ") : "—"}</span>
       </div>
     </div>
   );
