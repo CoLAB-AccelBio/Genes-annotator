@@ -1,4 +1,4 @@
-# AccelBio Gene Annotator
+# Genes Annotator
 
 **A browser-based gene annotation and clinical evidence explorer for cancer genomics research.**
 
